@@ -30,6 +30,29 @@ class UserCell: UICollectionViewCell {
         return view
     }()
     
+    // Simple Gradient View for legibility
+    private class GradientView: UIView {
+        override class var layerClass: AnyClass { CAGradientLayer.self }
+        var gradientLayer: CAGradientLayer { layer as! CAGradientLayer }
+    }
+    
+    private let bottomGradientView: GradientView = {
+        let view = GradientView()
+        view.backgroundColor = .clear
+        view.isUserInteractionEnabled = false
+        // Gradient from clear (top) to black (bottom)
+        view.gradientLayer.colors = [
+            UIColor.black.withAlphaComponent(0.0).cgColor,
+            UIColor.black.withAlphaComponent(0.8).cgColor
+        ]
+        view.gradientLayer.locations = [0.0, 1.0]
+        
+        view.layer.cornerRadius = 16
+        view.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]
+        view.clipsToBounds = true
+        return view
+    }()
+    
     private let nameLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.preferredFont(forTextStyle: .headline)
@@ -99,6 +122,7 @@ class UserCell: UICollectionViewCell {
     // MARK: - Setup
     private func setupUI() {
         contentView.addSubview(imageView)
+        contentView.addSubview(bottomGradientView)
         contentView.addSubview(blurView)
         contentView.addSubview(matchBadge)
         contentView.addSubview(nameLabel)
@@ -106,6 +130,7 @@ class UserCell: UICollectionViewCell {
         contentView.addSubview(likeButton)
         
         imageView.translatesAutoresizingMaskIntoConstraints = false
+        bottomGradientView.translatesAutoresizingMaskIntoConstraints = false
         blurView.translatesAutoresizingMaskIntoConstraints = false
         matchBadge.translatesAutoresizingMaskIntoConstraints = false
         nameLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -121,6 +146,11 @@ class UserCell: UICollectionViewCell {
             imageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             imageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             imageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            
+            bottomGradientView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            bottomGradientView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            bottomGradientView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            bottomGradientView.heightAnchor.constraint(equalTo: contentView.heightAnchor, multiplier: 0.5),
             
             blurView.topAnchor.constraint(equalTo: imageView.topAnchor),
             blurView.leadingAnchor.constraint(equalTo: imageView.leadingAnchor),
