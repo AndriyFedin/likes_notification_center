@@ -37,7 +37,7 @@ class MockAPIService: APIServiceProtocol {
             UserDTO(
                 id: "user_\(i)",
                 name: "User \(i)",
-                photoURL: "https://picsum.photos/seed/\(i)/200/300",
+                photoURL: "https://robohash.org/\(i).png?set=set2",
                 createdAt: Date().addingTimeInterval(TimeInterval(-i * 3600))
             )
         }
