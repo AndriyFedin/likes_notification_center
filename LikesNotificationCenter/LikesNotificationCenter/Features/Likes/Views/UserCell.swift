@@ -16,7 +16,7 @@ class UserCell: UICollectionViewCell {
         let iv = UIImageView()
         iv.contentMode = .scaleAspectFill
         iv.clipsToBounds = true
-        iv.backgroundColor = .secondarySystemBackground // "Skeleton" placeholder
+        iv.backgroundColor = .secondarySystemBackground
         iv.layer.cornerRadius = 16
         return iv
     }()
@@ -82,6 +82,10 @@ class UserCell: UICollectionViewCell {
         return label
     }()
     
+    // Constraints
+    private var nameLabelBottomWithButtons: NSLayoutConstraint!
+    private var nameLabelBottomWithoutButtons: NSLayoutConstraint!
+    
     // MARK: - Init
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -108,6 +112,10 @@ class UserCell: UICollectionViewCell {
         passButton.translatesAutoresizingMaskIntoConstraints = false
         likeButton.translatesAutoresizingMaskIntoConstraints = false
         
+        // Define constraints that change
+        nameLabelBottomWithButtons = nameLabel.bottomAnchor.constraint(equalTo: passButton.topAnchor, constant: -8)
+        nameLabelBottomWithoutButtons = nameLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12)
+        
         NSLayoutConstraint.activate([
             imageView.topAnchor.constraint(equalTo: contentView.topAnchor),
             imageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
@@ -130,12 +138,15 @@ class UserCell: UICollectionViewCell {
             likeButton.heightAnchor.constraint(equalToConstant: 48),
             
             nameLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
-            nameLabel.bottomAnchor.constraint(equalTo: passButton.topAnchor, constant: -8),
             nameLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12),
+            // Note: Bottom constraint activated dynamically
             
             matchBadge.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
             matchBadge.bottomAnchor.constraint(equalTo: nameLabel.topAnchor, constant: -6)
         ])
+        
+        // Default state
+        nameLabelBottomWithButtons.isActive = true
     }
     
     // MARK: - Configuration
@@ -160,11 +171,20 @@ class UserCell: UICollectionViewCell {
         blurView.isHidden = !isBlurred
         nameLabel.isHidden = isBlurred
         
-        // Button Logic: Hidden if blurred OR explicitly hidden
+        // Button Visibility Logic
         let hideButtons = isBlurred || !buttonsVisible
         passButton.isHidden = hideButtons
         likeButton.isHidden = hideButtons
         matchBadge.isHidden = isBlurred
+        
+        // Layout Logic
+        if hideButtons {
+            nameLabelBottomWithButtons.isActive = false
+            nameLabelBottomWithoutButtons.isActive = true
+        } else {
+            nameLabelBottomWithoutButtons.isActive = false
+            nameLabelBottomWithButtons.isActive = true
+        }
         
         contentView.isUserInteractionEnabled = !isBlurred
     }
