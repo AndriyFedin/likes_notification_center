@@ -22,7 +22,7 @@ class LikesViewController: UIViewController {
     }()
     
     private let segmentedControl: UISegmentedControl = {
-        let sc = UISegmentedControl(items: ["Liked you", "Likes sent"])
+        let sc = UISegmentedControl(items: ["Liked you", "Mutuals"])
         sc.selectedSegmentIndex = 0
         return sc
     }()
@@ -138,9 +138,13 @@ class LikesViewController: UIViewController {
                 return UICollectionViewCell()
             }
             
-            let isUnblurred = self.viewModel.isUnblurActive
-            cell.configure(with: itemViewModel, isBlurred: !isUnblurred)
+            cell.configure(
+                with: itemViewModel,
+                isBlurred: viewModel.areProfilesBlurred,
+                buttonsVisible: viewModel.areButtonsVisible
+            )
             cell.delegate = self
+            
             return cell
         }
     }

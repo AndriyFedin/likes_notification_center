@@ -16,7 +16,7 @@ class UserCell: UICollectionViewCell {
         let iv = UIImageView()
         iv.contentMode = .scaleAspectFill
         iv.clipsToBounds = true
-        iv.backgroundColor = .secondarySystemBackground // Skeleton placeholder
+        iv.backgroundColor = .secondarySystemBackground // "Skeleton" placeholder
         iv.layer.cornerRadius = 16
         return iv
     }()
@@ -139,7 +139,7 @@ class UserCell: UICollectionViewCell {
     }
     
     // MARK: - Configuration
-    func configure(with viewModel: UserCellViewModel, isBlurred: Bool) {
+    func configure(with viewModel: UserCellViewModel, isBlurred: Bool, buttonsVisible: Bool) {
         nameLabel.text = viewModel.name
         
         // Match badge (Simulated)
@@ -159,8 +159,11 @@ class UserCell: UICollectionViewCell {
         // Blur Logic
         blurView.isHidden = !isBlurred
         nameLabel.isHidden = isBlurred
-        passButton.isHidden = isBlurred
-        likeButton.isHidden = isBlurred
+        
+        // Button Logic: Hidden if blurred OR explicitly hidden
+        let hideButtons = isBlurred || !buttonsVisible
+        passButton.isHidden = hideButtons
+        likeButton.isHidden = hideButtons
         matchBadge.isHidden = isBlurred
         
         contentView.isUserInteractionEnabled = !isBlurred

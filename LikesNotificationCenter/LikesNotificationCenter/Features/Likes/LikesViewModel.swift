@@ -12,7 +12,7 @@ class LikesViewModel {
         case like(String)
         case pass(String)
         case unblurAllTapped
-        case segmentChanged(Int) // 0: Liked You (Incoming), 1: Likes Sent (Mutual)
+        case segmentChanged(Int) // 0: Liked You (Incoming), 1: Mutual
     }
     
     // MARK: - Outputs
@@ -21,8 +21,18 @@ class LikesViewModel {
     @Published var unblurTimeRemaining: String? = nil
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
-    @Published var isFeatureEnabled: Bool = false
+    @Published var isFeatureEnabled: Bool = true
     @Published var currentFilter: UserProfile.Status = .incoming
+    
+    // MARK: - Computed Properties
+    var areProfilesBlurred: Bool {
+        if currentFilter == .mutual { return false }
+        return !isUnblurActive
+    }
+    
+    var areButtonsVisible: Bool {
+        return currentFilter == .incoming
+    }
     
     // MARK: - Dependencies
     private let repository: LikesRepositoryProtocol
