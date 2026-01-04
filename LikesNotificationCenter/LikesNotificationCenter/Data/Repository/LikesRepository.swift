@@ -9,7 +9,7 @@ protocol LikesRepositoryProtocol {
     func passUser(userId: String) async throws
     func getUnblurState() -> (isActive: Bool, expiresAt: Date?)
     func startUnblurTimer()
-    func likesPublisher() -> AnyPublisher<[UserProfile], Never>
+    func likesPublisher(status: UserProfile.Status) -> AnyPublisher<[UserProfile], Never>
 }
 
 class LikesRepository: LikesRepositoryProtocol {
@@ -146,10 +146,10 @@ class LikesRepository: LikesRepositoryProtocol {
     
     // MARK: - Reactive Data Source
 
-    func likesPublisher() -> AnyPublisher<[UserProfile], Never> {
+    func likesPublisher(status: UserProfile.Status) -> AnyPublisher<[UserProfile], Never> {
         let request = NSFetchRequest<UserProfile>(entityName: UserProfile.entityName)
         request.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: false)]
-        request.predicate = NSPredicate(format: "status == %d", UserProfile.Status.incoming.rawValue)
+        request.predicate = NSPredicate(format: "status == %d", status.rawValue)
         
         let frc = NSFetchedResultsController(
             fetchRequest: request,

@@ -12,6 +12,7 @@ class LikesViewModel {
         case like(String)
         case pass(String)
         case unblurAllTapped
+        case segmentChanged(Int) // 0: Liked You (Incoming), 1: Likes Sent (Mutual)
     }
     
     // MARK: - Outputs
@@ -21,6 +22,7 @@ class LikesViewModel {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
     @Published var isFeatureEnabled: Bool = false
+    @Published var currentFilter: UserProfile.Status = .incoming
     
     // MARK: - Dependencies
     private let repository: LikesRepositoryProtocol
@@ -40,9 +42,17 @@ class LikesViewModel {
     }
     
     private func setupBindings() {
-        // Bind Repository Data Stream to View Model Items
-        repository.likesPublisher()
-            .receive(on: DispatchQueue.global(qos: .userInitiated)) // Map on background
+        // Observe Filter Change
+        $currentFilter
+            .removeDuplicates()
+            .handleEvents(receiveOutput: { [weak self] _ in
+                self?.isLoading = true
+            })
+            .map { [unowned self] status in
+                self.repository.likesPublisher(status: status)
+            }
+            .switchToLatest()
+            .receive(on: DispatchQueue.global(qos: .userInitiated))
             .map { profiles in
                 profiles.map { profile in
                     UserCellViewModel(
@@ -53,6 +63,9 @@ class LikesViewModel {
                 }
             }
             .receive(on: DispatchQueue.main)
+            .handleEvents(receiveOutput: { [weak self] _ in
+                self?.isLoading = false
+            })
             .assign(to: \.items, on: self)
             .store(in: &cancellables)
     }
@@ -74,6 +87,9 @@ class LikesViewModel {
             performPass(id)
         case .unblurAllTapped:
             activateUnblur()
+        case .segmentChanged(let index):
+            // 0 -> Incoming, 1 -> Mutual
+            currentFilter = (index == 0) ? .incoming : .mutual
         }
     }
     

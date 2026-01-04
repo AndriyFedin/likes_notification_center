@@ -1,16 +1,14 @@
 import UIKit
 import Combine
 
-enum LikesSection: Int, Hashable, Sendable { case main }
-
 class LikesViewController: UIViewController {
     
     // MARK: - Properties
     private let viewModel: LikesViewModel
     private var cancellables = Set<AnyCancellable>()
     
-    // Data Source - Using String (ID) as ItemIdentifierType to completely bypass concurrency inference issues
-    private typealias DataSource = UICollectionViewDiffableDataSource<LikesSection, String>
+    // Data Source
+    private typealias DataSource = UICollectionViewDiffableDataSource<String, String>
     private var dataSource: DataSource!
     
     // MARK: - UI Elements
@@ -21,6 +19,12 @@ class LikesViewController: UIViewController {
         cv.register(UserCell.self, forCellWithReuseIdentifier: UserCell.reuseId)
         cv.delegate = self
         return cv
+    }()
+    
+    private let segmentedControl: UISegmentedControl = {
+        let sc = UISegmentedControl(items: ["Liked you", "Likes sent"])
+        sc.selectedSegmentIndex = 0
+        return sc
     }()
     
     private let unblurButton: UIButton = {
@@ -74,16 +78,22 @@ class LikesViewController: UIViewController {
         navigationController?.navigationBar.prefersLargeTitles = true
         view.backgroundColor = .systemBackground
         
+        view.addSubview(segmentedControl)
         view.addSubview(collectionView)
         view.addSubview(unblurButton)
         view.addSubview(timerLabel)
         
+        segmentedControl.translatesAutoresizingMaskIntoConstraints = false
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         unblurButton.translatesAutoresizingMaskIntoConstraints = false
         timerLabel.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            collectionView.topAnchor.constraint(equalTo: view.topAnchor),
+            segmentedControl.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
+            segmentedControl.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            segmentedControl.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            
+            collectionView.topAnchor.constraint(equalTo: segmentedControl.bottomAnchor, constant: 10),
             collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -97,6 +107,7 @@ class LikesViewController: UIViewController {
             timerLabel.heightAnchor.constraint(equalToConstant: 50)
         ])
         
+        segmentedControl.addTarget(self, action: #selector(handleSegmentChange), for: .valueChanged)
         unblurButton.addTarget(self, action: #selector(handleUnblurTap), for: .touchUpInside)
         
         // Refresh Control
@@ -191,8 +202,8 @@ class LikesViewController: UIViewController {
     }
     
     private func applySnapshot(with items: [UserCellViewModel]) {
-        var snapshot = NSDiffableDataSourceSnapshot<LikesSection, String>()
-        snapshot.appendSections([.main])
+        var snapshot = NSDiffableDataSourceSnapshot<String, String>()
+        snapshot.appendSections(["section"])
         snapshot.appendItems(items.map { $0.id })
         dataSource.apply(snapshot, animatingDifferences: true)
     }
@@ -204,6 +215,10 @@ class LikesViewController: UIViewController {
     
     @objc private func handleUnblurTap() {
         viewModel.send(.unblurAllTapped)
+    }
+    
+    @objc private func handleSegmentChange(_ sender: UISegmentedControl) {
+        viewModel.send(.segmentChanged(sender.selectedSegmentIndex))
     }
 }
 
