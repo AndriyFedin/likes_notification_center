@@ -15,29 +15,46 @@ class LikesViewModel {
     }
     
     // MARK: - Outputs
+    @Published var items: [UserCellViewModel] = []
     @Published var isUnblurActive: Bool = false
     @Published var unblurTimeRemaining: String? = nil
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
-    @Published var isFeatureEnabled: Bool = false // New Output for Feature Flag
+    @Published var isFeatureEnabled: Bool = false
     
     // MARK: - Dependencies
     private let repository: LikesRepositoryProtocol
-    private let api: APIServiceProtocol // Need API for feature flag check directly or via repo
+    private let api: APIServiceProtocol
+    private weak var coordinator: LikesCoordinatorProtocol?
     
     private var cancellables = Set<AnyCancellable>()
     private var timer: Timer?
     
     // MARK: - Init
-    init(repository: LikesRepositoryProtocol, api: APIServiceProtocol = MockAPIService()) {
+    init(repository: LikesRepositoryProtocol, api: APIServiceProtocol = MockAPIService(), coordinator: LikesCoordinatorProtocol?) {
         self.repository = repository
         self.api = api
+        self.coordinator = coordinator
         
-        setupTimerCheck()
+        setupBindings()
     }
     
-    private func setupTimerCheck() {
-         // Logic will be triggered by viewDidLoad
+    private func setupBindings() {
+        // Bind Repository Data Stream to View Model Items
+        repository.likesPublisher()
+            .receive(on: DispatchQueue.global(qos: .userInitiated)) // Map on background
+            .map { profiles in
+                profiles.map { profile in
+                    UserCellViewModel(
+                        id: profile.id,
+                        name: profile.name,
+                        photoURL: profile.photoURL
+                    )
+                }
+            }
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.items, on: self)
+            .store(in: &cancellables)
     }
 
     // MARK: - Actions
@@ -45,7 +62,7 @@ class LikesViewModel {
         switch input {
         case .viewDidLoad:
             fetchFeatureFlag()
-            fetchData()
+            refresh()
             checkUnblurState()
         case .pullToRefresh:
             refresh()
@@ -68,17 +85,12 @@ class LikesViewModel {
                 let enabled = try await api.fetchFeatureFlag()
                 await MainActor.run {
                      self.isFeatureEnabled = enabled
-                     // Re-evaluate blur state based on flag
                      self.checkUnblurState() 
                 }
             } catch {
                 print("Failed to fetch feature flag: \(error)")
             }
         }
-    }
-
-    private func fetchData() {
-        refresh()
     }
     
     private func refresh() {
@@ -129,17 +141,11 @@ class LikesViewModel {
     private func checkUnblurState() {
         let state = repository.getUnblurState()
         
-        // If feature is disabled, items might be permanently unblurred or blurred depending on requirements.
-        // Assuming: If feature flag is OFF, items are always visible (unblurred).
-        // If feature flag is ON, they are blurred unless timer is active.
+        // Flag = True -> Blur is ON (default).
+        // Flag = False -> Blur is OFF.
         
-        // Actually, requirement says: "Items in Liked You may be blurred depending on a feature flag."
-        // Let's assume: Flag = True -> Blur is ON (default). Flag = False -> Blur is OFF.
-        
-        if !isFeatureEnabled {
-             // If feature "Blur" is not enabled, then content is Unblurred (Active = true)
-             // But we don't need a timer.
-             isUnblurActive = true 
+        guard isFeatureEnabled else {
+             isUnblurActive = true
              stopCountdown()
              return
         }
@@ -164,7 +170,6 @@ class LikesViewModel {
                 self?.unblurTimeRemaining = self?.formatTime(remaining)
             }
         }
-        // Fire immediately to set initial label
         let remaining = expiresAt.timeIntervalSinceNow
         if remaining > 0 {
              self.unblurTimeRemaining = self.formatTime(remaining)
@@ -181,5 +186,9 @@ class LikesViewModel {
         let m = Int(seconds) / 60
         let s = Int(seconds) % 60
         return String(format: "%02d:%02d", m, s)
+    }
+    
+    func viewModel(for id: String) -> UserCellViewModel? {
+        return items.first { $0.id == id }
     }
 }
