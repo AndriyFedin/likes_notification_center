@@ -9,6 +9,7 @@ protocol LikesRepositoryProtocol {
     func passUser(userId: String) async throws
     func getUnblurState() -> (isActive: Bool, expiresAt: Date?)
     func startUnblurTimer()
+    func likesPublisher() -> AnyPublisher<[UserProfile], Never>
 }
 
 class LikesRepository: LikesRepositoryProtocol {
@@ -36,7 +37,7 @@ class LikesRepository: LikesRepositoryProtocol {
         let response = try await api.fetchLikes(limit: 20, cursor: nil)
         self.currentCursor = response.nextCursor
         
-        await coreData.performBackgroundTask { context in
+        coreData.performBackgroundTask { context in
             self.saveUsers(response.data, context: context)
         }
     }
@@ -49,7 +50,7 @@ class LikesRepository: LikesRepositoryProtocol {
         let response = try await api.fetchLikes(limit: 20, cursor: cursor)
         self.currentCursor = response.nextCursor
         
-        await coreData.performBackgroundTask { context in
+        coreData.performBackgroundTask { context in
             self.saveUsers(response.data, context: context)
         }
     }
@@ -58,7 +59,7 @@ class LikesRepository: LikesRepositoryProtocol {
         context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
         
         for dto in users {
-            let request: NSFetchRequest<UserProfile> = UserProfile.fetchRequest()
+            let request = NSFetchRequest<UserProfile>(entityName: UserProfile.entityName)
             request.predicate = NSPredicate(format: "id == %@", dto.id)
             
             let profile: UserProfile
@@ -113,8 +114,8 @@ class LikesRepository: LikesRepositoryProtocol {
     }
     
     private func updateStatus(userId: String, status: UserProfile.Status) async {
-        await coreData.performBackgroundTask { context in
-            let request: NSFetchRequest<UserProfile> = UserProfile.fetchRequest()
+        coreData.performBackgroundTask { context in
+            let request = NSFetchRequest<UserProfile>(entityName: UserProfile.entityName)
             request.predicate = NSPredicate(format: "id == %@", userId)
             
             if let profile = try? context.fetch(request).first {
@@ -141,5 +142,22 @@ class LikesRepository: LikesRepositoryProtocol {
     func startUnblurTimer() {
         let expirationDate = Date().addingTimeInterval(120) // 2 minutes
         UserDefaults.standard.set(expirationDate, forKey: kUnblurExpiresAt)
+    }
+    
+    // MARK: - Reactive Data Source
+
+    func likesPublisher() -> AnyPublisher<[UserProfile], Never> {
+        let request = NSFetchRequest<UserProfile>(entityName: UserProfile.entityName)
+        request.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: false)]
+        request.predicate = NSPredicate(format: "status == %d", UserProfile.Status.incoming.rawValue)
+        
+        let frc = NSFetchedResultsController(
+            fetchRequest: request,
+            managedObjectContext: coreData.context,
+            sectionNameKeyPath: nil,
+            cacheName: nil
+        )
+        
+        return FRCPublisher(controller: frc).eraseToAnyPublisher()
     }
 }
