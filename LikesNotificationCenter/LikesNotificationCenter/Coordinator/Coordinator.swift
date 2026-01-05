@@ -9,7 +9,7 @@ protocol LikesCoordinatorProtocol: Coordinator {
     func showMutuals()
 }
 
-class AppCoordinator: LikesCoordinatorProtocol {
+final class AppCoordinator: LikesCoordinatorProtocol {
     var navigationController: UINavigationController
     
     init(navigationController: UINavigationController) {

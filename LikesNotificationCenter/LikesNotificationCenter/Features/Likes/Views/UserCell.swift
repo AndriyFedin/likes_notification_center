@@ -6,7 +6,7 @@ protocol UserCellDelegate: AnyObject {
     func didTapPass(in cell: UserCell)
 }
 
-class UserCell: UICollectionViewCell {
+final class UserCell: UICollectionViewCell {
     static let reuseId = "UserCell"
     
     weak var delegate: UserCellDelegate?

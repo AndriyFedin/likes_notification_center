@@ -2,7 +2,7 @@ import Foundation
 import Combine
 import CoreData
 
-class LikesViewModel {
+final class LikesViewModel {
     
     // MARK: - Inputs
     enum Input {

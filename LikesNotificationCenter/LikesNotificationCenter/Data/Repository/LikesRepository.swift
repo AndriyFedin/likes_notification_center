@@ -12,7 +12,7 @@ protocol LikesRepositoryProtocol {
     func likesPublisher(status: UserProfile.Status) -> AnyPublisher<[UserProfile], Never>
 }
 
-class LikesRepository: LikesRepositoryProtocol {
+final class LikesRepository: LikesRepositoryProtocol {
     
     private let api: APIServiceProtocol
     private let coreData: CoreDataStack

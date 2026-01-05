@@ -1,7 +1,7 @@
 import UIKit
 import Combine
 
-class LikesViewController: UIViewController {
+final class LikesViewController: UIViewController {
     
     // MARK: - Properties
     private let viewModel: LikesViewModel

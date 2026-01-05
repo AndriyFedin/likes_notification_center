@@ -18,7 +18,7 @@ protocol APIServiceProtocol {
     func performAction(userId: String, action: String) async throws
 }
 
-class MockAPIService: APIServiceProtocol {
+final class MockAPIService: APIServiceProtocol {
     
     private let totalItems = 100
     
