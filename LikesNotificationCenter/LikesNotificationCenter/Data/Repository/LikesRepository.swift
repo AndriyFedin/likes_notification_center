@@ -58,13 +58,17 @@ final class LikesRepository: LikesRepositoryProtocol {
     private func saveUsers(_ users: [UserDTO], context: NSManagedObjectContext) {
         context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
         
+        let ids = users.map { $0.id }
+        let request = NSFetchRequest<UserProfile>(entityName: UserProfile.entityName)
+        request.predicate = NSPredicate(format: "id IN %@", ids)
+        
+        let existingProfiles = (try? context.fetch(request)) ?? []
+        let profilesByID = existingProfiles.reduce(into: [String: UserProfile]()) { $0[$1.id] = $1 }
+        
         for dto in users {
-            let request = NSFetchRequest<UserProfile>(entityName: UserProfile.entityName)
-            request.predicate = NSPredicate(format: "id == %@", dto.id)
-            
             let profile: UserProfile
-            if let result = try? context.fetch(request).first {
-                profile = result
+            if let existing = profilesByID[dto.id] {
+                profile = existing
             } else {
                 profile = UserProfile(context: context)
                 profile.id = dto.id
