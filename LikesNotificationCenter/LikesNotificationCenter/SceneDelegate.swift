@@ -10,19 +10,10 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         
         let window = UIWindow(windowScene: windowScene)
         
-        // DI Setup
-        let coreDataStack = CoreDataStack.shared
-        let apiService = MockAPIService()
-        let repository = LikesRepository(api: apiService, coreData: coreDataStack)
-        
-        // Navigation
+        // Navigation & Coordinator
         let navController = UINavigationController()
         coordinator = AppCoordinator(navigationController: navController)
-        
-        let viewModel = LikesViewModel(repository: repository, api: apiService, coordinator: coordinator)
-        let viewController = LikesViewController(viewModel: viewModel)
-        
-        navController.viewControllers = [viewController]
+        coordinator?.start()
         
         window.rootViewController = navController
         window.makeKeyAndVisible()
