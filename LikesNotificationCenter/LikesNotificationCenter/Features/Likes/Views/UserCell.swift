@@ -109,6 +109,8 @@ final class UserCell: UICollectionViewCell {
     private var nameLabelBottomWithButtons: NSLayoutConstraint!
     private var nameLabelBottomWithoutButtons: NSLayoutConstraint!
     
+    private var imageTask: URLSessionDataTask?
+    
     // MARK: - Init
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -187,14 +189,17 @@ final class UserCell: UICollectionViewCell {
         matchBadge.isHidden = isBlurred || Bool.random()
         
         // Async Image Loading
+        imageTask?.cancel()
         imageView.image = nil
+        
         if let url = URL(string: viewModel.photoURL) {
-            URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
+            imageTask = URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
                 guard let data = data, let image = UIImage(data: data) else { return }
                 DispatchQueue.main.async {
                     self?.imageView.image = image
                 }
-            }.resume()
+            }
+            imageTask?.resume()
         }
         
         // Blur Logic
@@ -230,6 +235,8 @@ final class UserCell: UICollectionViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
+        imageTask?.cancel()
+        imageTask = nil
         imageView.image = nil
         blurView.isHidden = true
     }
