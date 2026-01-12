@@ -11,7 +11,7 @@ protocol LikesCoordinatorProtocol: Coordinator { }
 final class AppCoordinator: LikesCoordinatorProtocol {
     var navigationController: UINavigationController
     
-    // Dependencies (could be injected, but creating here for simplicity as per current scope)
+    // Dependencies (could be injected, but creating here for simplicity)
     private lazy var coreDataStack = CoreDataStack.shared
     private lazy var apiService = MockAPIService()
     private lazy var repository = LikesRepository(api: apiService, coreData: coreDataStack)
