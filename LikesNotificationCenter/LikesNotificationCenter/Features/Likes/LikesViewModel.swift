@@ -36,6 +36,7 @@ final class LikesViewModel {
     
     // MARK: - Dependencies
     private let repository: LikesRepositoryProtocol
+    private let unblurService: UnblurServiceProtocol
     private let api: APIServiceProtocol
     private weak var coordinator: LikesCoordinatorProtocol?
     
@@ -43,8 +44,9 @@ final class LikesViewModel {
     private var timer: Timer?
     
     // MARK: - Init
-    init(repository: LikesRepositoryProtocol, api: APIServiceProtocol = MockAPIService(), coordinator: LikesCoordinatorProtocol?) {
+    init(repository: LikesRepositoryProtocol, unblurService: UnblurServiceProtocol, api: APIServiceProtocol = MockAPIService(), coordinator: LikesCoordinatorProtocol?) {
         self.repository = repository
+        self.unblurService = unblurService
         self.api = api
         self.coordinator = coordinator
         
@@ -160,12 +162,12 @@ final class LikesViewModel {
     // MARK: - Unblur Timer Logic
     
     private func activateUnblur() {
-        repository.startUnblurTimer()
+        unblurService.startUnblurTimer()
         checkUnblurState()
     }
     
     private func checkUnblurState() {
-        let state = repository.getUnblurState()
+        let state = unblurService.getUnblurState()
         
         // Flag = True -> Blur is ON (default).
         // Flag = False -> Blur is OFF.

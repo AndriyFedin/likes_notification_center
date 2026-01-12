@@ -7,8 +7,6 @@ protocol LikesRepositoryProtocol {
     func loadMore() async throws
     func likeUser(userId: String) async throws
     func passUser(userId: String) async throws
-    func getUnblurState() -> (isActive: Bool, expiresAt: Date?)
-    func startUnblurTimer()
     func likesPublisher(status: UserProfile.Status) -> AnyPublisher<[UserProfile], Never>
 }
 
@@ -18,9 +16,6 @@ final class LikesRepository: LikesRepositoryProtocol {
     private let coreData: CoreDataStack
     private var currentCursor: String?
     private var isFetching = false
-    
-    // UserDefaults keys
-    private let kUnblurExpiresAt = "unblur_expires_at"
     
     init(api: APIServiceProtocol = MockAPIService(), coreData: CoreDataStack = .shared) {
         self.api = api
@@ -127,25 +122,6 @@ final class LikesRepository: LikesRepositoryProtocol {
                 try? context.save()
             }
         }
-    }
-    
-    // MARK: - Unblur Timer
-    
-    func getUnblurState() -> (isActive: Bool, expiresAt: Date?) {
-        guard let date = UserDefaults.standard.object(forKey: kUnblurExpiresAt) as? Date else {
-            return (false, nil)
-        }
-        
-        if date > Date() {
-            return (true, date)
-        } else {
-            return (false, nil)
-        }
-    }
-    
-    func startUnblurTimer() {
-        let expirationDate = Date().addingTimeInterval(120) // 2 minutes
-        UserDefaults.standard.set(expirationDate, forKey: kUnblurExpiresAt)
     }
     
     // MARK: - Reactive Data Source

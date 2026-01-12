@@ -15,13 +15,14 @@ final class AppCoordinator: LikesCoordinatorProtocol {
     private lazy var coreDataStack = CoreDataStack.shared
     private lazy var apiService = MockAPIService()
     private lazy var repository = LikesRepository(api: apiService, coreData: coreDataStack)
+    private lazy var unblurService = UnblurService()
     
     init(navigationController: UINavigationController) {
         self.navigationController = navigationController
     }
     
     func start() {
-        let viewModel = LikesViewModel(repository: repository, api: apiService, coordinator: self)
+        let viewModel = LikesViewModel(repository: repository, unblurService: unblurService, api: apiService, coordinator: self)
         let viewController = LikesViewController(viewModel: viewModel)
         navigationController.setViewControllers([viewController], animated: false)
     }
